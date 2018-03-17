@@ -25,19 +25,19 @@ config.readfp(open(settings_file))
 
 
 """Define command-line args"""
-parser = argparse.ArgumentParser(description="Twitter Profile Analyzer (https://github.com/nav97/Tweet-Analyzer)",
-                                 usage="-n <screen_name> [options]")
+# parser = argparse.ArgumentParser(description="Twitter Profile Analyzer (https://github.com/nav97/Tweet-Analyzer)",
+#                                  usage="-n <screen_name> [options]")
 
-parser.add_argument('-n', '--name', required=True, metavar="screen_name", 
-                    help='The specified twitter user screen name')
-parser.add_argument('-l', '--limit', metavar='N', type=int, default=1000, 
-                    help='Specify the number of tweets to retrieve going back from the latest tweet (default to 1000)')
-parser.add_argument('--utc-offset', type=int,
-                    help='Apply timezone offset (in seconds)')
-parser.add_argument('--no-timezone', action='store_true',
-                    help='Remove timezone auto-adjustment (default to UTC)')
+# parser.add_argument('-n', '--name', required=True, metavar="screen_name", 
+#                     help='The specified twitter user screen name')
+# parser.add_argument('-l', '--limit', metavar='N', type=int, default=1000, 
+#                     help='Specify the number of tweets to retrieve going back from the latest tweet (default to 1000)')
+# parser.add_argument('--utc-offset', type=int,
+#                     help='Apply timezone offset (in seconds)')
+# parser.add_argument('--no-timezone', action='store_true',
+#                     help='Remove timezone auto-adjustment (default to UTC)')
 
-args = parser.parse_args()
+# args = parser.parse_args()
 
 """GLOBAL VARIABLES"""
 start_date = 0
@@ -63,12 +63,12 @@ def process_tweet(tweet):
     date_of_tweet = tweet.created_at
     
     #Adjust time based off user specified offset which overrides profile settings
-    if(args.utc_offset):
-        date_of_tweet = (tweet.created_at + datetime.timedelta(seconds=args.utc_offset))
+    # if(args.utc_offset):
+    #     date_of_tweet = (tweet.created_at + datetime.timedelta(seconds=args.utc_offset))
     
     #Auto adjust time based off user profile location
-    elif(tweet.user.utc_offset and not args.no_timezone):
-        date_of_tweet = (tweet.created_at + datetime.timedelta(seconds=tweet.user.utc_offset))
+    # elif(tweet.user.utc_offset and not args.no_timezone):
+    #     date_of_tweet = (tweet.created_at + datetime.timedelta(seconds=tweet.user.utc_offset))
 
     #Range of tweets analyzed in specified timezone
     end_date = end_date or date_of_tweet
@@ -150,83 +150,87 @@ def graph_heatmap(userId, num_of_tweets, utc_offset):
 
 
 def main():
+
+    # Random API key selection 
+    randVal = randint(1,14)
+    CONSUMER_KEY = config.get('API Keys ' + str(randVal), 'API_KEY')
+    CONSUMER_SECRET = config.get('API Keys ' + str(randVal), 'API_SECRET')
+    ACCESS_TOKEN = config.get('API Keys ' + str(randVal), 'ACCESS_TOKEN')
+    ACCESS_TOKEN_SECRET = config.get('API Keys ' + str(randVal), 'ACCESS_TOKEN_SECRET')
+    
+    auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
+    auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
+    api = tweepy.API(auth)
+
+    print("[[-]] Getting @%s account information..." % users)
+
+    user = api.get_user(screen_name=users)
+    num_of_tweets = min([3200, user.statuses_count])
+
+    print("[[-]] Name           : %s" %user.name)
+    print("[[-]] Id           : %s" %user.id)
+    print("[[-]] Description    : %s" %user.description).encode(sys.stdout.encoding, errors='replace')
+    print("[[-]] Followers      : %s" %user.followers_count)
+    print("[[-]] Following      : %s" %user.friends_count)
+    print("[[-]] Language       : %s" %user.lang)
+    print("[[-]] Geo Enabled    : %s" %user.geo_enabled)
+    print("[[-]] Location       : %s" %user.location)
+    print("[[-]] Time zone      : %s" %user.time_zone)
+    print("[[-]] UTC offset     : %s" %user.utc_offset)
+    
+
+    # if(args.utc_offset):
+    #     print("[[!]] applying timezone offset of %s s" %args.utc_offset)
+
+    print("[[-]] Total tweets   : %s" %user.statuses_count)
+    print("")
+    print("[[-]] Retrieving last %s tweets..." %num_of_tweets)
+
+    if(num_of_tweets == 0):
+        sys.exit()
+
+    get_tweets(api, users, num_of_tweets)
+    print("[[-]] Success! Tweets retrieved from %s to %s (%s days)\n" %( start_date, end_date, (end_date - start_date).days ))
+
+    print("[[-]] Top 10 Detected Hashtags")
+    print_stats(detected_hashtags)
+    
+    print("[[-]] Top 10 Mentioned Websites")
+    print_stats(detected_urls)
+
+    print("[[-]] Top 10 Mentioned Users")
+    print_stats(mentioned_users)
+
+    print("[[-]] Top 10 Retweeted Users")
+    print_stats(retweeted_users)
+
+    print("[[-]] Top 10 Detected Locations")
+    print_stats(detected_locations)
+
+    print("[[-]] Top 10 Detected Devices")
+    print_stats(detected_devices)
+
+    utc_offset = user.utc_offset
+    # utc_offset = 0 if args.no_timezone else utc_offset
+    graph_heatmap(user.id, num_of_tweets, utc_offset)
+
+    with open("datas/" + str(user.id) + "_profileInfo.csv","w") as fp:
+        fp.write(str(user.name) + ";" + str(user.id) + ";" + str(user.description) + ";" + str(user.followers_count) + ";" + str(user.friends_count) + ";" + str(user.lang) + ";" + str(user.geo_enabled) + ";" + str(user.location) + ";" + str(user.time_zone) + ";" + str(user.utc_offset) + ";" + str(user.statuses_count) + ";" + str(detected_hashtags) + ";" + str(detected_urls) + ";" + str(mentioned_users) + ";" + str(retweeted_users) + ";" + str(detected_locations) + ";" + str(detected_devices))
+        fp.close()
+
+if __name__ == "__main__":
     with open("usernames") as f:
         content = f.readlines()
     content = [x.strip() for x in content]
 
-    for users in content:
-        # Random API key selection 
-        randVal = randint(1,14)
-        CONSUMER_KEY = config.get('API Keys ' + str(randVal), 'API_KEY')
-        CONSUMER_SECRET = config.get('API Keys ' + str(randVal), 'API_SECRET')
-        ACCESS_TOKEN = config.get('API Keys ' + str(randVal), 'ACCESS_TOKEN')
-        ACCESS_TOKEN_SECRET = config.get('API Keys ' + str(randVal), 'ACCESS_TOKEN_SECRET')
-        
-        auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
-        auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
-        api = tweepy.API(auth)
-
-        print("[[-]] Getting @%s account information..." % users)
-
-        user = api.get_user(screen_name=users)
-        num_of_tweets = min([3200, user.statuses_count])
-
-        print("[[-]] Name           : %s" %user.name)
-        print("[[-]] Id           : %s" %user.id)
-        print("[[-]] Description    : %s" %user.description).encode(sys.stdout.encoding, errors='replace')
-        print("[[-]] Followers      : %s" %user.followers_count)
-        print("[[-]] Following      : %s" %user.friends_count)
-        print("[[-]] Language       : %s" %user.lang)
-        print("[[-]] Geo Enabled    : %s" %user.geo_enabled)
-        print("[[-]] Location       : %s" %user.location)
-        print("[[-]] Time zone      : %s" %user.time_zone)
-        print("[[-]] UTC offset     : %s" %user.utc_offset)
-        
-
-        if(args.utc_offset):
-            print("[[!]] applying timezone offset of %s s" %args.utc_offset)
-
-        print("[[-]] Total tweets   : %s" %user.statuses_count)
-        print("")
-        print("[[-]] Retrieving last %s tweets..." %num_of_tweets)
-
-        if(num_of_tweets == 0):
-            sys.exit()
-
-        get_tweets(api, users, num_of_tweets)
-        print("[[-]] Success! Tweets retrieved from %s to %s (%s days)\n" %( start_date, end_date, (end_date - start_date).days ))
-
-        print("[[-]] Top 10 Detected Hashtags")
-        print_stats(detected_hashtags)
-        
-        print("[[-]] Top 10 Mentioned Websites")
-        print_stats(detected_urls)
-
-        print("[[-]] Top 10 Mentioned Users")
-        print_stats(mentioned_users)
-
-        print("[[-]] Top 10 Retweeted Users")
-        print_stats(retweeted_users)
-
-        print("[[-]] Top 10 Detected Locations")
-        print_stats(detected_locations)
-
-        print("[[-]] Top 10 Detected Devices")
-        print_stats(detected_devices)
-
-        utc_offset = args.utc_offset if args.utc_offset else user.utc_offset
-        utc_offset = 0 if args.no_timezone else utc_offset
-        graph_heatmap(user.id, num_of_tweets, utc_offset)
-
-        with open("datas/" + str(user.id) + "_profileInfo.csv","w") as fp:
-            fp.write(str(user.name) + ";" + str(user.id) + ";" + str(user.description) + ";" + str(user.followers_count) + ";" + str(user.friends_count) + ";" + str(user.lang) + ";" + str(user.geo_enabled) + ";" + str(user.location) + ";" + str(user.time_zone) + ";" + str(user.utc_offset) + ";" + str(user.statuses_count) + ";" + str(detected_hashtags) + ";" + str(detected_urls) + ";" + str(mentioned_users) + ";" + str(retweeted_users) + ";" + str(detected_locations) + ";" + str(detected_devices))
-            fp.close()
-
-if __name__ == "__main__":
-    try:
-        main()
-    except tweepy.error.TweepError as e:
-        print("\nTwitter error: %s" %e)
-    except Exception as e:
-        print("\nError: %s" %e)
-        traceback.print_exc()
+    while True:
+        for users in content:
+            try:
+                main()
+            except tweepy.error.TweepError as e:
+                print("\nTwitter error: %s" %e)
+                time.sleep(10)
+                continue
+            except Exception as e:
+                print("\nError: %s" %e)
+                traceback.print_exc()
