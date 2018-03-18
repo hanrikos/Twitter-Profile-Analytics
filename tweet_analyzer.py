@@ -13,6 +13,7 @@ from tqdm import tqdm
 import ConfigParser
 from random import randint
 import os
+import time
 
 try:
     from urllib.parse import urlparse
@@ -169,8 +170,9 @@ def main():
 
     user = api.get_user(screen_name=users)
     num_of_tweets = min([3200, user.statuses_count])
-    
-    if user.id not in allUsersDone:
+ #   print user.id
+#    print allUsersDone
+    if str(user.id) not in allUsersDone:
         # print("[[-]] Name           : %s" %user.name)
         # print("[[-]] Id           : %s" %user.id)
         # print("[[-]] Description    : %s" %user.description).encode(sys.stdout.encoding, errors='replace')
@@ -235,7 +237,7 @@ if __name__ == "__main__":
                     main()
                 except tweepy.error.TweepError as e:
                     print("\nTwitter error: %s" %e)
-                    time.sleep(10)
+                    
                     continue
                 except Exception as e:
                     print("\nError: %s" %e)
