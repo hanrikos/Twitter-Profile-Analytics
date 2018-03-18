@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 import ConfigParser
 from random import randint
+import os
 
 try:
     from urllib.parse import urlparse
@@ -222,15 +223,18 @@ if __name__ == "__main__":
     with open("usernames") as f:
         content = f.readlines()
     content = [x.strip() for x in content]
+    allUsersDone = os.listdir("datas")
+    allUsersDone = [x[:-16] for x in allUsersDone]
 
     while True:
         for users in content:
-            try:
-                main()
-            except tweepy.error.TweepError as e:
-                print("\nTwitter error: %s" %e)
-                time.sleep(10)
-                continue
-            except Exception as e:
-                print("\nError: %s" %e)
-                traceback.print_exc()
+            if users not in allUsersDone:
+                try:
+                    main()
+                except tweepy.error.TweepError as e:
+                    print("\nTwitter error: %s" %e)
+                    time.sleep(10)
+                    continue
+                except Exception as e:
+                    print("\nError: %s" %e)
+                    traceback.print_exc()
