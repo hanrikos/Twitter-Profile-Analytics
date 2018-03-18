@@ -58,6 +58,17 @@ allUsersDone = os.listdir("datas")
 allUsersDone = [x[:-16] for x in allUsersDone]
 
 
+# names to id mapping
+with open("names_to_ids.txt") as f:
+    names_to_ids = f.readlines()
+names_to_ids = [x.strip() for x in names_to_ids]
+
+nameId_dict = {}
+
+for vals in names_to_ids:
+    nameId_dict[vals.split(",")[0]] = int(vals.split(",")[1])
+
+
 """Process and analyze a single tweet, updating our data"""
 def process_tweet(tweet):
     global start_date
@@ -154,25 +165,27 @@ def graph_heatmap(userId, num_of_tweets, utc_offset):
 
 
 def main():
+    print users
+    print nameId_dict[users]
+    if nameId_dict[users] not in allUsersDone:
 
-    # Random API key selection 
-    randVal = randint(1,14)
-    CONSUMER_KEY = config.get('API Keys ' + str(randVal), 'API_KEY')
-    CONSUMER_SECRET = config.get('API Keys ' + str(randVal), 'API_SECRET')
-    ACCESS_TOKEN = config.get('API Keys ' + str(randVal), 'ACCESS_TOKEN')
-    ACCESS_TOKEN_SECRET = config.get('API Keys ' + str(randVal), 'ACCESS_TOKEN_SECRET')
-    
-    auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
-    auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
-    api = tweepy.API(auth)
+        # Random API key selection 
+        randVal = randint(1,14)
+        CONSUMER_KEY = config.get('API Keys ' + str(randVal), 'API_KEY')
+        CONSUMER_SECRET = config.get('API Keys ' + str(randVal), 'API_SECRET')
+        ACCESS_TOKEN = config.get('API Keys ' + str(randVal), 'ACCESS_TOKEN')
+        ACCESS_TOKEN_SECRET = config.get('API Keys ' + str(randVal), 'ACCESS_TOKEN_SECRET')
+        
+        auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
+        auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
+        api = tweepy.API(auth)
 
-    print("[[-]] Getting @%s account information..." % users)
+        print("[[-]] Getting @%s account information..." % users)
 
-    user = api.get_user(screen_name=users)
-    num_of_tweets = min([3200, user.statuses_count])
+        user = api.get_user(screen_name=users)
+        num_of_tweets = min([3200, user.statuses_count])
  #   print user.id
 #    print allUsersDone
-    if str(user.id) not in allUsersDone:
         # print("[[-]] Name           : %s" %user.name)
         # print("[[-]] Id           : %s" %user.id)
         # print("[[-]] Description    : %s" %user.description).encode(sys.stdout.encoding, errors='replace')
