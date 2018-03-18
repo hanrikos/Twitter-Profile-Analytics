@@ -66,7 +66,7 @@ names_to_ids = [x.strip() for x in names_to_ids]
 nameId_dict = {}
 
 for vals in names_to_ids:
-    nameId_dict[vals.split(",")[0]] = int(vals.split(",")[1])
+    nameId_dict[vals.split(",")[0]] = vals.split(",")[1]
 
 
 """Process and analyze a single tweet, updating our data"""
@@ -166,7 +166,6 @@ def graph_heatmap(userId, num_of_tweets, utc_offset):
 
 def main():
     print users
-    print nameId_dict[users]
     if nameId_dict[users] not in allUsersDone:
 
         # Random API key selection 
