@@ -164,13 +164,13 @@ def main():
     auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
     auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
     api = tweepy.API(auth)
+
+    print("[[-]] Getting @%s account information..." % users)
+
+    user = api.get_user(screen_name=users)
+    num_of_tweets = min([3200, user.statuses_count])
+    
     if user.id not in allUsersDone:
-
-        print("[[-]] Getting @%s account information..." % users)
-
-        user = api.get_user(screen_name=users)
-        num_of_tweets = min([3200, user.statuses_count])
-
         # print("[[-]] Name           : %s" %user.name)
         # print("[[-]] Id           : %s" %user.id)
         # print("[[-]] Description    : %s" %user.description).encode(sys.stdout.encoding, errors='replace')
