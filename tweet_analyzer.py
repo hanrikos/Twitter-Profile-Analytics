@@ -53,6 +53,8 @@ detected_devices = collections.Counter()
 
 daily_activity_matrix = np.zeros((7, 24))
 
+allUsersDone = os.listdir("datas")
+allUsersDone = [x[:-16] for x in allUsersDone]
 
 
 """Process and analyze a single tweet, updating our data"""
@@ -162,69 +164,69 @@ def main():
     auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
     auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
     api = tweepy.API(auth)
+    if user.id not in allUsersDone:
+        
+        print("[[-]] Getting @%s account information..." % users)
 
-    print("[[-]] Getting @%s account information..." % users)
+        user = api.get_user(screen_name=users)
+        num_of_tweets = min([3200, user.statuses_count])
 
-    user = api.get_user(screen_name=users)
-    num_of_tweets = min([3200, user.statuses_count])
+        print("[[-]] Name           : %s" %user.name)
+        print("[[-]] Id           : %s" %user.id)
+        print("[[-]] Description    : %s" %user.description).encode(sys.stdout.encoding, errors='replace')
+        print("[[-]] Followers      : %s" %user.followers_count)
+        print("[[-]] Following      : %s" %user.friends_count)
+        print("[[-]] Language       : %s" %user.lang)
+        print("[[-]] Geo Enabled    : %s" %user.geo_enabled)
+        print("[[-]] Location       : %s" %user.location)
+        print("[[-]] Time zone      : %s" %user.time_zone)
+        print("[[-]] UTC offset     : %s" %user.utc_offset)
+        
 
-    print("[[-]] Name           : %s" %user.name)
-    print("[[-]] Id           : %s" %user.id)
-    print("[[-]] Description    : %s" %user.description).encode(sys.stdout.encoding, errors='replace')
-    print("[[-]] Followers      : %s" %user.followers_count)
-    print("[[-]] Following      : %s" %user.friends_count)
-    print("[[-]] Language       : %s" %user.lang)
-    print("[[-]] Geo Enabled    : %s" %user.geo_enabled)
-    print("[[-]] Location       : %s" %user.location)
-    print("[[-]] Time zone      : %s" %user.time_zone)
-    print("[[-]] UTC offset     : %s" %user.utc_offset)
-    
+        # if(args.utc_offset):
+        #     print("[[!]] applying timezone offset of %s s" %args.utc_offset)
 
-    # if(args.utc_offset):
-    #     print("[[!]] applying timezone offset of %s s" %args.utc_offset)
+        print("[[-]] Total tweets   : %s" %user.statuses_count)
+        print("")
+        print("[[-]] Retrieving last %s tweets..." %num_of_tweets)
 
-    print("[[-]] Total tweets   : %s" %user.statuses_count)
-    print("")
-    print("[[-]] Retrieving last %s tweets..." %num_of_tweets)
+        if(num_of_tweets == 0):
+            sys.exit()
 
-    if(num_of_tweets == 0):
-        sys.exit()
+        get_tweets(api, users, num_of_tweets)
+        print("[[-]] Success! Tweets retrieved from %s to %s (%s days)\n" %( start_date, end_date, (end_date - start_date).days ))
 
-    get_tweets(api, users, num_of_tweets)
-    print("[[-]] Success! Tweets retrieved from %s to %s (%s days)\n" %( start_date, end_date, (end_date - start_date).days ))
+        print("[[-]] Top 10 Detected Hashtags")
+        print_stats(detected_hashtags)
+        
+        print("[[-]] Top 10 Mentioned Websites")
+        print_stats(detected_urls)
 
-    print("[[-]] Top 10 Detected Hashtags")
-    print_stats(detected_hashtags)
-    
-    print("[[-]] Top 10 Mentioned Websites")
-    print_stats(detected_urls)
+        print("[[-]] Top 10 Mentioned Users")
+        print_stats(mentioned_users)
 
-    print("[[-]] Top 10 Mentioned Users")
-    print_stats(mentioned_users)
+        print("[[-]] Top 10 Retweeted Users")
+        print_stats(retweeted_users)
 
-    print("[[-]] Top 10 Retweeted Users")
-    print_stats(retweeted_users)
+        print("[[-]] Top 10 Detected Locations")
+        print_stats(detected_locations)
 
-    print("[[-]] Top 10 Detected Locations")
-    print_stats(detected_locations)
+        print("[[-]] Top 10 Detected Devices")
+        print_stats(detected_devices)
 
-    print("[[-]] Top 10 Detected Devices")
-    print_stats(detected_devices)
+        utc_offset = user.utc_offset
+        # utc_offset = 0 if args.no_timezone else utc_offset
+        graph_heatmap(user.id, num_of_tweets, utc_offset)
 
-    utc_offset = user.utc_offset
-    # utc_offset = 0 if args.no_timezone else utc_offset
-    graph_heatmap(user.id, num_of_tweets, utc_offset)
-
-    with open("datas/" + str(user.id) + "_profileInfo.csv","w") as fp:
-        fp.write(str(user.name) + ";" + str(user.id) + ";" + str(user.description) + ";" + str(user.followers_count) + ";" + str(user.friends_count) + ";" + str(user.lang) + ";" + str(user.geo_enabled) + ";" + str(user.location) + ";" + str(user.time_zone) + ";" + str(user.utc_offset) + ";" + str(user.statuses_count) + ";" + str(detected_hashtags) + ";" + str(detected_urls) + ";" + str(mentioned_users) + ";" + str(retweeted_users) + ";" + str(detected_locations) + ";" + str(detected_devices))
-        fp.close()
+        with open("datas/" + str(user.id) + "_profileInfo.csv","w") as fp:
+            fp.write(str(user.name) + ";" + str(user.id) + ";" + str(user.description) + ";" + str(user.followers_count) + ";" + str(user.friends_count) + ";" + str(user.lang) + ";" + str(user.geo_enabled) + ";" + str(user.location) + ";" + str(user.time_zone) + ";" + str(user.utc_offset) + ";" + str(user.statuses_count) + ";" + str(detected_hashtags) + ";" + str(detected_urls) + ";" + str(mentioned_users) + ";" + str(retweeted_users) + ";" + str(detected_locations) + ";" + str(detected_devices))
+            fp.close()
 
 if __name__ == "__main__":
     with open("usernames") as f:
         content = f.readlines()
     content = [x.strip() for x in content]
-    allUsersDone = os.listdir("datas")
-    allUsersDone = [x[:-16] for x in allUsersDone]
+   
 
     while True:
         for users in content:
