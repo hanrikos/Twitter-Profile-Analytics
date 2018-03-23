@@ -14,6 +14,9 @@ import ConfigParser
 from random import randint
 import os
 import time
+from pprint import pprint
+import json
+import api_settings
 
 try:
     from urllib.parse import urlparse
@@ -21,6 +24,8 @@ except ImportError:
     from urlparse import urlparse
 
 settings_file =  "apikeys/apikeys.txt"
+history_file = "apikeys/api_history.txt"
+
 # Read config settings
 config = ConfigParser.ConfigParser()
 config.readfp(open(settings_file))
@@ -124,10 +129,15 @@ def process_tweet(tweet):
 
 """Download Tweets from user account"""
 def get_tweets(api, user, limit):
+    tweets_arr = []
     for tweet in tqdm(tweepy.Cursor(api.user_timeline, screen_name=user).items(limit), unit="tweets", total=limit):
-        process_tweet(tweet)
+        tweets_arr.append(json.dumps(tweet._json))
+        # break
+        # process_tweet(tweet)
 
-
+    with open("tweets/" + user + ".json","wb") as fw:
+         json.dump(tweets_arr, fw)
+    sys.exit(1)
 
 """Print stats to terminal"""
 def print_stats(data, amount=10):
@@ -170,14 +180,15 @@ def main():
         if nameId_dict[users] not in allUsersDone:
 
             # Random API key selection 
-            randVal = randint(1,14)
-            CONSUMER_KEY = config.get('API Keys ' + str(randVal), 'API_KEY')
-            CONSUMER_SECRET = config.get('API Keys ' + str(randVal), 'API_SECRET')
-            ACCESS_TOKEN = config.get('API Keys ' + str(randVal), 'ACCESS_TOKEN')
-            ACCESS_TOKEN_SECRET = config.get('API Keys ' + str(randVal), 'ACCESS_TOKEN_SECRET')
-            
-            auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
-            auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
+            # randVal = randint(1,14)
+            # CONSUMER_KEY = config.get('API Keys ' + str(randVal), 'API_KEY')
+            # CONSUMER_SECRET = config.get('API Keys ' + str(randVal), 'API_SECRET')
+            # ACCESS_TOKEN = config.get('API Keys ' + str(randVal), 'ACCESS_TOKEN')
+            # ACCESS_TOKEN_SECRET = config.get('API Keys ' + str(randVal), 'ACCESS_TOKEN_SECRET')
+            consumer_key, consumer_secret, access_token, access_token_secret = api_settings.populate_Settings(settings_file, history_file)
+
+            auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+            auth.set_access_token(access_token, access_token_secret)
             api = tweepy.API(auth)
 
             print("[[-]] Getting @%s account information..." % users)
