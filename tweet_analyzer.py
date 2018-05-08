@@ -59,21 +59,23 @@ detected_devices = collections.Counter()
 
 daily_activity_matrix = np.zeros((7, 24))
 
-allUsersDone = os.listdir("datas")
-allUsersDone = [x[:-16] for x in allUsersDone]
+allUsersDone = os.listdir("tweets")
+allUsersDone = [x[:-5] for x in allUsersDone]
 
+#print allUsersDone
 
 # names to id mapping
-with open("names_to_ids.txt") as f:
-    names_to_ids = f.readlines()
-names_to_ids = [x.strip() for x in names_to_ids]
+#with open("names_to_ids.txt") as f:
+#    names_to_ids = f.readlines()
+#names_to_ids = [x.strip() for x in names_to_ids]
+
+#nameId_dict = {}
+
+#for vals in names_to_ids:
+#    nameId_dict[vals.split(",")[0]] = vals.split(",")[1]
+#print nameId_dict
 
 nameId_dict = {}
-
-for vals in names_to_ids:
-    nameId_dict[vals.split(",")[0]] = vals.split(",")[1]
-
-
 """Process and analyze a single tweet, updating our data"""
 def process_tweet(tweet):
     global start_date
@@ -130,14 +132,14 @@ def process_tweet(tweet):
 """Download Tweets from user account"""
 def get_tweets(api, user, limit):
     tweets_arr = []
-    for tweet in tqdm(tweepy.Cursor(api.user_timeline, screen_name=user).items(limit), unit="tweets", total=limit):
+    for tweet in tqdm(tweepy.Cursor(api.user_timeline, id=user).items(limit), unit="tweets", total=limit):
         tweets_arr.append(json.dumps(tweet._json))
         # break
         # process_tweet(tweet)
 
     with open("tweets/" + user + ".json","wb") as fw:
          json.dump(tweets_arr, fw)
-    sys.exit(1)
+    #sys.exit(1)
 
 """Print stats to terminal"""
 def print_stats(data, amount=10):
@@ -147,6 +149,7 @@ def print_stats(data, amount=10):
         sortedKeys = sorted(data, key=data.get, reverse=True)
         maxKeyLength = max([len(x) for x in sortedKeys])
         for key in sortedKeys:
+	    print key
             print(("- \033[1m{:<%d}\033[0m {:>6} {:<4}" % maxKeyLength
                     ).format(key, data[key], "(%d%%)" % ((float(data[key]) / total) * 100))
                     ).encode(sys.stdout.encoding, errors='replace')
@@ -175,9 +178,12 @@ def graph_heatmap(userId, num_of_tweets, utc_offset):
 
 
 def main():
-    print users
-    if users in nameId_dict:
-        if nameId_dict[users] not in allUsersDone:
+    #print users
+
+    if users not in nameId_dict:
+	#print nameId_dict[users]
+	#print allUsersDone
+        #if str(nameId_dict[users]) not in allUsersDone:
 
             # Random API key selection 
             # randVal = randint(1,14)
@@ -185,16 +191,16 @@ def main():
             # CONSUMER_SECRET = config.get('API Keys ' + str(randVal), 'API_SECRET')
             # ACCESS_TOKEN = config.get('API Keys ' + str(randVal), 'ACCESS_TOKEN')
             # ACCESS_TOKEN_SECRET = config.get('API Keys ' + str(randVal), 'ACCESS_TOKEN_SECRET')
-            consumer_key, consumer_secret, access_token, access_token_secret = api_settings.populate_Settings(settings_file, history_file)
+         consumer_key, consumer_secret, access_token, access_token_secret = api_settings.populate_Settings(settings_file, history_file)
 
-            auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
-            auth.set_access_token(access_token, access_token_secret)
-            api = tweepy.API(auth)
+         auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+         auth.set_access_token(access_token, access_token_secret)
+         api = tweepy.API(auth)
 
-            print("[[-]] Getting @%s account information..." % users)
+         print("[[-]] Getting @%s account information..." % users)
 
-            user = api.get_user(screen_name=users)
-            num_of_tweets = min([3200, user.statuses_count])
+         user = api.get_user(id=users)
+         num_of_tweets = min([3200, user.statuses_count])
      #   print user.id
     #    print allUsersDone
             # print("[[-]] Name           : %s" %user.name)
@@ -216,10 +222,10 @@ def main():
             # print("")
             # print("[[-]] Retrieving last %s tweets..." %num_of_tweets)
 
-            if(num_of_tweets == 0):
-                sys.exit()
+            #if(num_of_tweets == 0):
+            #    continue
 
-            get_tweets(api, users, num_of_tweets)
+         get_tweets(api, users, num_of_tweets)
             # print("[[-]] Success! Tweets retrieved from %s to %s (%s days)\n" %( start_date, end_date, (end_date - start_date).days ))
 
             # # print("[[-]] Top 10 Detected Hashtags")
@@ -240,13 +246,13 @@ def main():
             # # print("[[-]] Top 10 Detected Devices")
             # print_stats(detected_devices)
 
-            utc_offset = user.utc_offset
+         utc_offset = user.utc_offset
             # utc_offset = 0 if args.no_timezone else utc_offset
             #graph_heatmap(user.id, num_of_tweets, utc_offset)
 
-            with open("datas/" + str(user.id) + "_profileInfo.csv","w") as fp:
-                fp.write(str(user.name.encode('utf8')) + ";" + str(user.id) + ";" + str(user.description.encode('utf8')) + ";" + str(user.followers_count) + ";" + str(user.friends_count) + ";" + str(user.lang) + ";" + str(user.geo_enabled) + ";" + str(user.location) + ";" + str(user.time_zone) + ";" + str(user.utc_offset) + ";" + str(user.statuses_count) + ";" + str(detected_hashtags) + ";" + str(detected_urls) + ";" + str(mentioned_users) + ";" + str(retweeted_users) + ";" + str(detected_locations) + ";" + str(detected_devices))
-                fp.close()
+         with open("datas/" + str(user.id) + "_profileInfo.csv","w") as fp:
+             fp.write(str(user.name.encode('utf8')) + ";" + str(user.id) + ";" + str(user.description.encode('utf8')) + ";" + str(user.followers_count) + ";" + str(user.friends_count) + ";" + str(user.lang) + ";" + str(user.geo_enabled) + ";" + str(user.location) + ";" + str(user.time_zone) + ";" + str(user.utc_offset) + ";" + str(user.statuses_count) + ";" + str(detected_hashtags) + ";" + str(detected_urls) + ";" + str(mentioned_users) + ";" + str(retweeted_users) + ";" + str(detected_locations) + ";" + str(detected_devices))
+             fp.close()
 
 if __name__ == "__main__":
     with open("usernames") as f:
@@ -254,10 +260,10 @@ if __name__ == "__main__":
     content = [x.strip() for x in content]
    
 
-    while True:
-        for users in content:
-            if users not in allUsersDone:
-                try:
+    #while True:
+    for users in content:
+	if users not in allUsersDone:
+		try:
                     main()
                 except tweepy.error.TweepError as e:
                     print("\nTwitter error: %s" %e)

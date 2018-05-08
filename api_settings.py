@@ -17,14 +17,14 @@ def populate_Settings(sfile, hfile):
 	settings_file = sfile
 	history_file = hfile
 
-	print settings_file
+	#print settings_file
 	# Read the history file
 	with open(history_file) as f:
 		content = f.readlines()
 
 	last = 0
 
-	print(content)
+	#print(content)
 
 	last = int(content[0])
 
